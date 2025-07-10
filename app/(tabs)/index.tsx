@@ -33,15 +33,16 @@ export default function HomeScreen() {
 		return () => clearTimeout(timeout);
 	}, [mot]);
 
-	const isEmpty = mot.trim().length === 0 && resultats.length === 0;
+	const isEmpty = mot.trim().length === 0;
 
 	return (
 		<SafeArea style={styles.container}>
-			<View
-				style={[
-					styles.headerContainer,
-					isEmpty && styles.centerHeaderContainer,
+			<ScrollView
+				contentContainerStyle={[
+					styles.scrollContent,
+					isEmpty && resultats.length === 0 ? styles.centerEmpty : {},
 				]}
+				keyboardShouldPersistTaps="handled"
 			>
 				<View style={styles.header}>
 					<ThemedText style={styles.title}>Triche Scrabble</ThemedText>
@@ -58,26 +59,19 @@ export default function HomeScreen() {
 						/>
 					</ThemedView>
 				</View>
-			</View>
 
-			{!isEmpty && (
-				<ScrollView
-					contentContainerStyle={styles.scrollContent}
-					keyboardShouldPersistTaps="handled"
-				>
-					<ThemedView style={styles.resultatsContainer}>
-						{resultats.length === 0 && mot.length > 0 ? (
-							<ThemedText>Aucun résultat trouvé</ThemedText>
-						) : (
-							resultats.map((mot, index) => (
-								<ThemedView key={index} style={styles.badge}>
-									<ThemedText style={styles.badgeText}>{mot}</ThemedText>
-								</ThemedView>
-							))
-						)}
-					</ThemedView>
-				</ScrollView>
-			)}
+				<ThemedView style={styles.resultatsContainer}>
+					{resultats.length === 0 && mot.length > 0 ? (
+						<ThemedText>Aucun résultat trouvé</ThemedText>
+					) : (
+						resultats.map((mot, index) => (
+							<ThemedView key={index} style={styles.badge}>
+								<ThemedText style={styles.badgeText}>{mot}</ThemedText>
+							</ThemedView>
+						))
+					)}
+				</ThemedView>
+			</ScrollView>
 		</SafeArea>
 	);
 }
@@ -87,11 +81,12 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: "#222a22",
 	},
-	headerContainer: {
+	scrollContent: {
 		flexGrow: 1,
+		paddingBottom: 40,
+		paddingHorizontal: 16,
 	},
-	centerHeaderContainer: {
-		flex: 1,
+	centerEmpty: {
 		justifyContent: "center",
 		alignItems: "center",
 	},
@@ -119,10 +114,6 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		color: "#fff",
 		letterSpacing: 2,
-	},
-	scrollContent: {
-		paddingBottom: 40,
-		paddingHorizontal: 16,
 	},
 	resultatsContainer: {
 		flexDirection: "row",
