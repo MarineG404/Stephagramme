@@ -33,16 +33,15 @@ export default function HomeScreen() {
 		return () => clearTimeout(timeout);
 	}, [mot]);
 
-	const isEmpty = mot.trim().length === 0;
+	const isEmpty = mot.trim().length === 0 && resultats.length === 0;
 
 	return (
 		<SafeArea style={styles.container}>
-			<ScrollView
-				contentContainerStyle={[
-					styles.scrollContent,
-					isEmpty && resultats.length === 0 ? styles.centerEmpty : {},
+			<View
+				style={[
+					styles.headerContainer,
+					isEmpty && styles.centerHeaderContainer,
 				]}
-				keyboardShouldPersistTaps="handled"
 			>
 				<View style={styles.header}>
 					<ThemedText style={styles.title}>Triche Scrabble</ThemedText>
@@ -59,21 +58,26 @@ export default function HomeScreen() {
 						/>
 					</ThemedView>
 				</View>
+			</View>
 
-				{/* On garde la zone visible tout le temps */}
-				<ThemedView style={styles.resultatsContainer}>
-					{/* Affichage conditionnel à l’intérieur */}
-					{resultats.length === 0 && mot.length > 0 ? (
-						<ThemedText>Aucun résultat trouvé</ThemedText>
-					) : (
-						resultats.map((mot, index) => (
-							<ThemedView key={index} style={styles.badge}>
-								<ThemedText style={styles.badgeText}>{mot}</ThemedText>
-							</ThemedView>
-						))
-					)}
-				</ThemedView>
-			</ScrollView>
+			{!isEmpty && (
+				<ScrollView
+					contentContainerStyle={styles.scrollContent}
+					keyboardShouldPersistTaps="handled"
+				>
+					<ThemedView style={styles.resultatsContainer}>
+						{resultats.length === 0 && mot.length > 0 ? (
+							<ThemedText>Aucun résultat trouvé</ThemedText>
+						) : (
+							resultats.map((mot, index) => (
+								<ThemedView key={index} style={styles.badge}>
+									<ThemedText style={styles.badgeText}>{mot}</ThemedText>
+								</ThemedView>
+							))
+						)}
+					</ThemedView>
+				</ScrollView>
+			)}
 		</SafeArea>
 	);
 }
@@ -83,12 +87,11 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: "#222a22",
 	},
-	scrollContent: {
+	headerContainer: {
 		flexGrow: 1,
-		paddingBottom: 40,
-		paddingHorizontal: 16,
 	},
-	centerEmpty: {
+	centerHeaderContainer: {
+		flex: 1,
 		justifyContent: "center",
 		alignItems: "center",
 	},
@@ -117,6 +120,10 @@ const styles = StyleSheet.create({
 		color: "#fff",
 		letterSpacing: 2,
 	},
+	scrollContent: {
+		paddingBottom: 40,
+		paddingHorizontal: 16,
+	},
 	resultatsContainer: {
 		flexDirection: "row",
 		flexWrap: "wrap",
@@ -127,15 +134,15 @@ const styles = StyleSheet.create({
 	},
 	badge: {
 		backgroundColor: "#333",
-		paddingVertical: 6,
-		paddingHorizontal: 12,
+		paddingVertical: 10,
+		paddingHorizontal: 20,
 		borderRadius: 20,
 		borderWidth: 1,
 		borderColor: "#b2df28",
 	},
 	badgeText: {
 		color: "#fff",
-		fontSize: 16,
+		fontSize: 22,
 		letterSpacing: 1,
 	},
 });
