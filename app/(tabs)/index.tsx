@@ -1,75 +1,141 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import SafeArea from "@/components/themed/SafeArea";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import React from "react";
+import {
+	Dimensions,
+	ScrollView,
+	StyleSheet,
+	TextInput,
+	View,
+} from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const MAX_WIDTH = Dimensions.get("window").width * 0.9;
+
+import { findAnagrams } from "@/utils/anagrammes";
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+	const [mot, setMot] = React.useState("");
+	const [resultats, setResultats] = React.useState<string[]>([]);
+
+	React.useEffect(() => {
+		const trimmed = mot.trim();
+		if (trimmed.length === 0) {
+			setResultats([]);
+			return;
+		}
+
+		const timeout = setTimeout(() => {
+			const anagrammes = findAnagrams(trimmed);
+			setResultats(anagrammes);
+		}, 300);
+
+		return () => clearTimeout(timeout);
+	}, [mot]);
+
+	const isEmpty = mot.trim().length === 0;
+
+	return (
+		<SafeArea style={styles.container}>
+			<ScrollView
+				contentContainerStyle={[
+					styles.scrollContent,
+					isEmpty && resultats.length === 0 ? styles.centerEmpty : {},
+				]}
+				keyboardShouldPersistTaps="handled"
+			>
+				<View style={styles.header}>
+					<ThemedText style={styles.title}>Triche Scrabble</ThemedText>
+
+					<ThemedView style={styles.inputContainer}>
+						<TextInput
+							style={styles.input}
+							placeholder="Entrez vos lettres…"
+							placeholderTextColor="#b2df28"
+							value={mot}
+							onChangeText={setMot}
+							autoCapitalize="none"
+							autoCorrect={false}
+						/>
+					</ThemedView>
+				</View>
+
+				{/* On garde la zone visible tout le temps */}
+				<ThemedView style={styles.resultatsContainer}>
+					{/* Affichage conditionnel à l’intérieur */}
+					{resultats.length === 0 && mot.length > 0 ? (
+						<ThemedText>Aucun résultat trouvé</ThemedText>
+					) : (
+						resultats.map((mot, index) => (
+							<ThemedView key={index} style={styles.badge}>
+								<ThemedText style={styles.badgeText}>{mot}</ThemedText>
+							</ThemedView>
+						))
+					)}
+				</ThemedView>
+			</ScrollView>
+		</SafeArea>
+	);
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+	container: {
+		flex: 1,
+		backgroundColor: "#222a22",
+	},
+	scrollContent: {
+		flexGrow: 1,
+		paddingBottom: 40,
+		paddingHorizontal: 16,
+	},
+	centerEmpty: {
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	header: {
+		alignItems: "center",
+		paddingTop: 32,
+		paddingBottom: 16,
+	},
+	title: {
+		fontSize: 32,
+		fontWeight: "bold",
+		color: "#b2df28",
+		marginBottom: 24,
+		letterSpacing: 2,
+	},
+	inputContainer: {
+		width: MAX_WIDTH,
+		backgroundColor: "#333",
+		borderRadius: 12,
+		padding: 12,
+		borderWidth: 2,
+		borderColor: "#b2df28",
+	},
+	input: {
+		fontSize: 20,
+		color: "#fff",
+		letterSpacing: 2,
+	},
+	resultatsContainer: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		justifyContent: "center",
+		gap: 8,
+		marginTop: 24,
+		backgroundColor: "#222a22",
+	},
+	badge: {
+		backgroundColor: "#333",
+		paddingVertical: 6,
+		paddingHorizontal: 12,
+		borderRadius: 20,
+		borderWidth: 1,
+		borderColor: "#b2df28",
+	},
+	badgeText: {
+		color: "#fff",
+		fontSize: 16,
+		letterSpacing: 1,
+	},
 });
