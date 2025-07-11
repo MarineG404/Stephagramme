@@ -1,6 +1,7 @@
 import SafeArea from "@/components/themed/SafeArea";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { Audio } from "expo-av";
 import React from "react";
 import {
 	Dimensions,
@@ -13,6 +14,17 @@ import {
 const MAX_WIDTH = Dimensions.get("window").width * 0.9;
 
 import { findAnagrams } from "@/utils/anagrammes";
+
+// Prevent app from pausing background music by allowing audio to mix with others.
+Audio.setAudioModeAsync({
+	allowsRecordingIOS: false,
+	staysActiveInBackground: false,
+	interruptionModeIOS: 1,
+	playsInSilentModeIOS: true,
+	shouldDuckAndroid: false,
+	interruptionModeAndroid: 1,
+	playThroughEarpieceAndroid: false,
+});
 
 export default function HomeScreen() {
 	const [mot, setMot] = React.useState("");
@@ -28,7 +40,7 @@ export default function HomeScreen() {
 		const timeout = setTimeout(() => {
 			const anagrammes = findAnagrams(trimmed);
 			setResultats(anagrammes);
-		}, 300);
+		}, 30);
 
 		return () => clearTimeout(timeout);
 	}, [mot]);
