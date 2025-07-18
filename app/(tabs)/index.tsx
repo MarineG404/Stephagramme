@@ -13,9 +13,10 @@ import {
 
 const MAX_WIDTH = Dimensions.get("window").width * 0.9;
 
-import { findAnagrams } from "@/utils/anagrammes";
+import { findAnagrams, findAnagramsWithJoker } from "@/utils/anagrammes";
+import { highlightJokerLetters } from "@/utils/highlightJoker";
 
-// Prevent app from pausing background music by allowing audio to mix with others.
+// Configure audio mode
 Audio.setAudioModeAsync({
 	allowsRecordingIOS: false,
 	staysActiveInBackground: false,
@@ -38,7 +39,13 @@ export default function HomeScreen() {
 		}
 
 		const timeout = setTimeout(() => {
-			const anagrammes = findAnagrams(trimmed);
+			let anagrammes: string[];
+			if (trimmed.includes("?")) {
+				const inputSansJoker = trimmed.replace(/\?/g, "");
+				anagrammes = findAnagramsWithJoker(inputSansJoker);
+			} else {
+				anagrammes = findAnagrams(trimmed);
+			}
 			setResultats(anagrammes);
 		}, 30);
 
@@ -76,11 +83,27 @@ export default function HomeScreen() {
 					{resultats.length === 0 && mot.length > 0 ? (
 						<ThemedText>Aucun résultat trouvé</ThemedText>
 					) : (
-						resultats.map((mot, index) => (
-							<ThemedView key={index} style={styles.badge}>
-								<ThemedText style={styles.badgeText}>{mot}</ThemedText>
-							</ThemedView>
-						))
+						resultats.map((motPropose, index) => {
+							const lettres = highlightJokerLetters(motPropose, mot);
+							return (
+								<ThemedView key={index} style={styles.badge}>
+									<ThemedText style={styles.badgeText}>
+										{lettres.map((l, i) => (
+											<ThemedText
+												key={i}
+												style={{
+													color: l.isJoker ? "#ff5c5c" : "#fff",
+													letterSpacing: 1,
+													fontSize: 22,
+												}}
+											>
+												{l.letter}
+											</ThemedText>
+										))}
+									</ThemedText>
+								</ThemedView>
+							);
+						})
 					)}
 				</ThemedView>
 			</ScrollView>
@@ -147,5 +170,7 @@ const styles = StyleSheet.create({
 		color: "#fff",
 		fontSize: 22,
 		letterSpacing: 1,
+		flexDirection: "row",
+		flexWrap: "nowrap",
 	},
 });
