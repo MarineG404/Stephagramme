@@ -1,4 +1,4 @@
-import SafeArea from "@/components/themed/SafeArea";
+import { ThemedSafeAreaView } from "@/components/themed/ThemedSafeAreaView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { AntDesign, Feather } from "@expo/vector-icons";
@@ -80,7 +80,7 @@ export default function HomeScreen() {
 	}, [word, runSearch]);
 
 	return (
-		<SafeArea style={styles.container}>
+		<ThemedSafeAreaView style={styles.container}>
 			<ScrollView
 				contentContainerStyle={[
 					styles.scrollContent,
@@ -167,7 +167,7 @@ export default function HomeScreen() {
 					) : null}
 				</View>
 			</ScrollView>
-		</SafeArea>
+		</ThemedSafeAreaView>
 	);
 }
 
