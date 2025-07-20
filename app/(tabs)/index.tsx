@@ -1,10 +1,11 @@
 import SafeArea from "@/components/themed/SafeArea";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { AntDesign, Feather } from '@expo/vector-icons';
+import { AntDesign, Feather } from "@expo/vector-icons";
 import { Audio } from "expo-av";
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+	ActivityIndicator,
 	Dimensions,
 	ScrollView,
 	StyleSheet,
@@ -18,32 +19,40 @@ import { highlightJokerLetters } from "@/utils/highlightJoker";
 
 const MAX_WIDTH = Dimensions.get("window").width * 0.9;
 
-Audio.setAudioModeAsync({
-	allowsRecordingIOS: false,
-	staysActiveInBackground: false,
-	interruptionModeIOS: 1,
-	playsInSilentModeIOS: true,
-	shouldDuckAndroid: false,
-	interruptionModeAndroid: 1,
-	playThroughEarpieceAndroid: false,
-});
-
 export default function HomeScreen() {
-	const [word, setWord] = React.useState("");
-	const [results, setResults] = React.useState<string[]>([]);
-	const [isRunning, setIsRunning] = React.useState(false);
-	const [cleanIsRunning, setCleanIsRunning] = React.useState(false); // 👈 ajouté
+	const [word, setWord] = useState("");
+	const [results, setResults] = useState<string[]>([]);
+	const [isRunning, setIsRunning] = useState(false);
+	const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const runSearch = async () => {
-		setIsRunning(true);
-		await new Promise((resolve) => setTimeout(resolve, 50));
+	const isEmpty = word.trim().length === 0;
 
+	// Configure audio mode on mount
+	useEffect(() => {
+		Audio.setAudioModeAsync({
+			allowsRecordingIOS: false,
+			staysActiveInBackground: false,
+			interruptionModeIOS: 1,
+			playsInSilentModeIOS: true,
+			shouldDuckAndroid: false,
+			interruptionModeAndroid: 1,
+			playThroughEarpieceAndroid: false,
+		});
+	}, []);
+
+	// Main search function
+	const runSearch = useCallback(async () => {
 		const trimmed = word.trim();
+
+		setIsRunning(true);
+
 		if (trimmed.length === 0) {
 			setResults([]);
 			setIsRunning(false);
 			return;
 		}
+
+		await new Promise((resolve) => setTimeout(resolve, 100));
 
 		let anagrams: string[];
 		if (trimmed.includes("?")) {
@@ -53,19 +62,22 @@ export default function HomeScreen() {
 			anagrams = findAnagrams(trimmed);
 		}
 
+		anagrams.sort((a, b) => b.length - a.length || a.localeCompare(b));
 		setResults(anagrams);
 		setIsRunning(false);
-	};
-
-	React.useEffect(() => {
-		const timeout = setTimeout(() => {
-			runSearch();
-		}, 30);
-
-		return () => clearTimeout(timeout);
 	}, [word]);
 
-	const isEmpty = word.trim().length === 0;
+	// Debounced search when typing
+	useEffect(() => {
+		if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+		debounceTimeout.current = setTimeout(() => {
+			runSearch();
+		}, 200);
+
+		return () => {
+			if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+		};
+	}, [word, runSearch]);
 
 	return (
 		<SafeArea style={styles.container}>
@@ -76,6 +88,7 @@ export default function HomeScreen() {
 				]}
 				keyboardShouldPersistTaps="handled"
 			>
+				{/* Header / Input */}
 				<View style={styles.header}>
 					<ThemedText style={styles.title}>Triche Scrabble</ThemedText>
 
@@ -90,75 +103,65 @@ export default function HomeScreen() {
 								autoCapitalize="none"
 								autoCorrect={false}
 							/>
+
 							<TouchableOpacity onPress={runSearch} style={styles.iconButton}>
 								<Feather name="refresh-ccw" size={24} color="#b2df28" />
 							</TouchableOpacity>
 
 							<TouchableOpacity
-								onPress={async () => {
-									setCleanIsRunning(true);
-									await new Promise(resolve => setTimeout(resolve, 50));
-									setWord('');
-									setCleanIsRunning(false);
-								}}
+								onPress={() => setWord("")}
 								style={[
 									styles.iconButton,
-									(cleanIsRunning || word.trim().length === 0) && styles.iconButtonDisabled,
+									isEmpty && styles.iconButtonDisabled,
 								]}
-								disabled={cleanIsRunning || word.trim().length === 0}
+								disabled={isEmpty}
 							>
-								{cleanIsRunning ? (
-									<AntDesign
-										name="loading1"
-										size={24}
-										color="#b2df28"
-									/>
-								) : (
-									<AntDesign
-										name="closecircle"
-										size={24}
-										color={word.trim().length === 0 ? "#555" : "#b2df28"}
-									/>
-								)}
+								<AntDesign
+									name="closecircle"
+									size={24}
+									color={isEmpty ? "#555" : "#b2df28"}
+								/>
 							</TouchableOpacity>
 						</View>
 					</ThemedView>
 				</View>
 
+				{/* Résultats */}
 				<View style={styles.resultContainer}>
 					{isRunning ? (
-						<ThemedText style={styles.loadingText}>Recherche en cours...</ThemedText>
-					) : results.length === 0 && word.length > 0 ? (
-						<ThemedText style={styles.noResultText}>Aucun résultat trouvé</ThemedText>
+						<ActivityIndicator size="large" color="#b2df28" style={styles.loader} />
+					) : results.length === 0 && !isEmpty ? (
+						<ThemedText style={styles.noResultText}>
+							Aucun résultat trouvé
+						</ThemedText>
 					) : results.length > 0 ? (
 						<>
 							<ThemedText style={styles.countText}>
-								{results.length} mot{results.length > 1 ? "s" : ""} trouvé{results.length > 1 ? "s" : ""}
+								{results.length} mot{results.length > 1 ? "s" : ""} trouvé
+								{results.length > 1 ? "s" : ""}
 							</ThemedText>
 							<View style={styles.wordList}>
-								{results
-									.sort((a, b) => b.length - a.length || a.localeCompare(b))
-									.map((suggestedWord, index) => {
-										const letters = highlightJokerLetters(suggestedWord, word);
-										return (
-											<ThemedView key={index} style={styles.badge}>
-												<ThemedText style={styles.badgeText}>
-													{letters.map((l, i) => (
-														<ThemedText
-															key={i}
-															style={{
-																color: l.isJoker ? "#ff5c5c" : "#fff",
-																letterSpacing: 1,
-																fontSize: 22,
-															}}
-														>
-															{l.letter}
-														</ThemedText>
-													))}
-												</ThemedText>
-											</ThemedView>
-										);
-									})}
+								{results.map((suggestedWord, index) => {
+									const letters = highlightJokerLetters(suggestedWord, word);
+									return (
+										<ThemedView key={index} style={styles.badge}>
+											<View style={styles.badgeInner}>
+												{letters.map((l, i) => (
+													<ThemedText
+														key={i}
+														style={{
+															color: l.isJoker ? "#ff5c5c" : "#fff",
+															letterSpacing: 1,
+															fontSize: 22,
+														}}
+													>
+														{l.letter}
+													</ThemedText>
+												))}
+											</View>
+										</ThemedView>
+									);
+								})}
 							</View>
 						</>
 					) : null}
@@ -225,11 +228,8 @@ const styles = StyleSheet.create({
 		marginTop: 24,
 		paddingHorizontal: 8,
 	},
-	loadingText: {
-		color: "#b2df28",
-		fontSize: 20,
-		paddingVertical: 20,
-		textAlign: "center",
+	loader: {
+		marginVertical: 24,
 	},
 	noResultText: {
 		color: "#ff5c5c",
@@ -247,7 +247,6 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		flexWrap: "wrap",
 		justifyContent: "center",
-		gap: 8,
 	},
 	badge: {
 		backgroundColor: "#333",
@@ -256,13 +255,9 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 		borderWidth: 1,
 		borderColor: "#b2df28",
-		marginBottom: 8,
+		margin: 4,
 	},
-	badgeText: {
-		color: "#fff",
-		fontSize: 22,
-		letterSpacing: 1,
+	badgeInner: {
 		flexDirection: "row",
-		flexWrap: "nowrap",
 	},
 });
