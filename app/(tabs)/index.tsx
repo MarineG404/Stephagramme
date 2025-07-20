@@ -17,7 +17,7 @@ import {
 import { findAnagrams, findAnagramsWithJoker } from "@/utils/anagrammes";
 import { highlightJokerLetters } from "@/utils/highlightJoker";
 
-const MAX_WIDTH = Dimensions.get("window").width * 0.9;
+const MAX_WIDTH = Dimensions.get("window").width * 0.95; // Agrandi de 0.9 à 0.95
 
 export default function HomeScreen() {
 	const [word, setWord] = useState("");
@@ -105,7 +105,7 @@ export default function HomeScreen() {
 							/>
 
 							<TouchableOpacity onPress={runSearch} style={styles.iconButton}>
-								<Feather name="refresh-ccw" size={24} color="#b2df28" />
+								<Feather name="refresh-ccw" size={28} color="#b2df28" />
 							</TouchableOpacity>
 
 							<TouchableOpacity
@@ -118,7 +118,7 @@ export default function HomeScreen() {
 							>
 								<AntDesign
 									name="closecircle"
-									size={24}
+									size={28}
 									color={isEmpty ? "#555" : "#b2df28"}
 								/>
 							</TouchableOpacity>
@@ -211,15 +211,19 @@ const styles = StyleSheet.create({
 	},
 	input: {
 		flex: 1,
-		fontSize: 20,
+		fontSize: 22,
 		color: "#fff",
-		paddingVertical: 8,
-		paddingHorizontal: 12,
+		paddingVertical: 12,
+		paddingHorizontal: 16,
 		letterSpacing: 2,
 	},
 	iconButton: {
-		paddingHorizontal: 8,
-		paddingVertical: 4,
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		marginLeft: 8,
+		justifyContent: "center",
+		alignItems: "center",
+		borderRadius: 8,
 	},
 	iconButtonDisabled: {
 		opacity: 0.4,
