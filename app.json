@@ -50,6 +50,7 @@
       "eas": {
         "projectId": "c9b8f893-ea3f-4692-87aa-4ef245741580"
       }
-    }
+    },
+	"cli" : {"login" : false}
   }
 }
