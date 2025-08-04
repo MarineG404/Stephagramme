@@ -45,15 +45,37 @@ export function findAnagrams(input: string): string[] {
 
 // 🔹 Recherche avec un seul joker (lettre bonus)
 export function findAnagramsWithJoker(input: string): string[] {
-	const base = input.toUpperCase();
 	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	const upperInput = input.toUpperCase();
+	const jokerCount = (upperInput.match(/\?/g) || []).length;
+	const baseLetters = upperInput.replace(/\?/g, '').split('');
 	const results = new Set<string>();
 
-	for (const extra of alphabet) {
-		const extended = base + extra;
-		const anagrams = findAnagrams(extended);
-		anagrams.forEach((w) => results.add(w));
+	if (jokerCount === 0) {
+		return findAnagrams(upperInput);
 	}
+
+	// Génère toutes les combinaisons possibles de lettres pour les jokers
+	function generateJokerCombos(current: string[], jokersLeft: number) {
+		if (jokersLeft === 0) {
+			// Pour chaque taille possible (2 à current.length)
+			for (let size = 2; size <= current.length; size++) {
+				const combos = getSortedCombinations(current);
+				for (const combo of combos) {
+					const match = wordIndex.get(combo);
+					if (match) {
+						match.forEach((w) => results.add(w));
+					}
+				}
+			}
+			return;
+		}
+		for (const letter of alphabet) {
+			generateJokerCombos([...current, letter], jokersLeft - 1);
+		}
+	}
+
+	generateJokerCombos(baseLetters, jokerCount);
 
 	return Array.from(results).sort((a, b) => b.length - a.length || a.localeCompare(b));
 }
