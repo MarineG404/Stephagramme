@@ -7,17 +7,21 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Dimensions,
+	Linking,
+	Modal,
+	Pressable,
 	ScrollView,
 	StyleSheet,
 	TextInput,
 	TouchableOpacity,
-	View,
+	View
 } from "react-native";
 
 import { findAnagrams, findAnagramsWithJoker } from "@/utils/anagrammes";
+import { getDefinitionWithApi } from "@/utils/def";
 import { highlightJokerLetters } from "@/utils/highlightJoker";
 
-const MAX_WIDTH = Dimensions.get("window").width * 0.95; // Agrandi de 0.9 à 0.95
+const MAX_WIDTH = Dimensions.get("window").width * 0.95;
 
 export default function HomeScreen() {
 	const [word, setWord] = useState("");
@@ -25,9 +29,14 @@ export default function HomeScreen() {
 	const [isRunning, setIsRunning] = useState(false);
 	const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+	// Modal state
+	const [selectedWord, setSelectedWord] = useState<string | null>(null);
+	const [definition, setDefinition] = useState<string | null>(null);
+	const [modalVisible, setModalVisible] = useState(false);
+	const [loadingDef, setLoadingDef] = useState(false);
+
 	const isEmpty = word.trim().length === 0;
 
-	// Configure audio mode on mount
 	useEffect(() => {
 		Audio.setAudioModeAsync({
 			allowsRecordingIOS: false,
@@ -40,7 +49,6 @@ export default function HomeScreen() {
 		});
 	}, []);
 
-	// Main search function
 	const runSearch = useCallback(async () => {
 		const trimmed = word.trim();
 
@@ -66,7 +74,6 @@ export default function HomeScreen() {
 		setIsRunning(false);
 	}, [word]);
 
-	// Debounced search when typing
 	useEffect(() => {
 		if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
 		debounceTimeout.current = setTimeout(() => {
@@ -78,6 +85,18 @@ export default function HomeScreen() {
 		};
 	}, [word, runSearch]);
 
+	// Ouvre modal avec définition
+	const openDefinitionModal = async (selected: string) => {
+		setSelectedWord(selected);
+		setDefinition(null);
+		setModalVisible(true);
+		setLoadingDef(true);
+
+		const def = await getDefinitionWithApi(selected);
+		setDefinition(def || "Pas de définition trouvée.");
+		setLoadingDef(false);
+	};
+
 	return (
 		<ThemedSafeAreaView style={styles.container}>
 			<ScrollView
@@ -87,7 +106,7 @@ export default function HomeScreen() {
 				]}
 				keyboardShouldPersistTaps="handled"
 			>
-				{/* Header / Input */}
+				{/* Header */}
 				<View style={styles.header}>
 					<ThemedText style={styles.title}>Triche Scrabble</ThemedText>
 
@@ -109,10 +128,7 @@ export default function HomeScreen() {
 
 							<TouchableOpacity
 								onPress={() => setWord("")}
-								style={[
-									styles.iconButton,
-									isEmpty && styles.iconButtonDisabled,
-								]}
+								style={[styles.iconButton, isEmpty && styles.iconButtonDisabled]}
 								disabled={isEmpty}
 							>
 								<AntDesign
@@ -130,9 +146,7 @@ export default function HomeScreen() {
 					{isRunning ? (
 						<ActivityIndicator size="large" color="#b2df28" style={styles.loader} />
 					) : results.length === 0 && !isEmpty ? (
-						<ThemedText style={styles.noResultText}>
-							Aucun résultat trouvé
-						</ThemedText>
+						<ThemedText style={styles.noResultText}>Aucun résultat trouvé</ThemedText>
 					) : results.length > 0 ? (
 						<>
 							<ThemedText style={styles.countText}>
@@ -143,7 +157,11 @@ export default function HomeScreen() {
 								{results.map((suggestedWord, index) => {
 									const letters = highlightJokerLetters(suggestedWord, word);
 									return (
-										<ThemedView key={index} style={styles.badge}>
+										<TouchableOpacity
+											key={index}
+											style={styles.badge}
+											onPress={() => openDefinitionModal(suggestedWord)}
+										>
 											<View style={styles.badgeInner}>
 												{letters.map((l, i) => (
 													<ThemedText
@@ -158,7 +176,7 @@ export default function HomeScreen() {
 													</ThemedText>
 												))}
 											</View>
-										</ThemedView>
+										</TouchableOpacity>
 									);
 								})}
 							</View>
@@ -166,6 +184,52 @@ export default function HomeScreen() {
 					) : null}
 				</View>
 			</ScrollView>
+
+			{/* Modal */}
+			<Modal
+				visible={modalVisible}
+				transparent
+				animationType="slide"
+				onRequestClose={() => setModalVisible(false)}
+			>
+				<View style={modalStyles.overlay}>
+					<View style={modalStyles.container}>
+						<ThemedText style={modalStyles.title}>{selectedWord}</ThemedText>
+
+						{/* ScrollView pour afficher toute la définition */}
+						<ScrollView
+							style={modalStyles.scrollView}
+							contentContainerStyle={{ paddingBottom: 12 }}
+							showsVerticalScrollIndicator={true}
+						>
+							{loadingDef ? (
+								<ActivityIndicator color="#b2df28" />
+							) : (
+								<ThemedText style={modalStyles.definition}>{definition}</ThemedText>
+							)}
+						</ScrollView>
+
+						{!loadingDef && (
+							<Pressable
+								onPress={() =>
+									Linking.openURL(
+										`https://fr.wiktionary.org/wiki/${encodeURIComponent(
+											(selectedWord || "").toLowerCase()
+										)}`
+									)
+								}
+							>
+								<ThemedText style={modalStyles.link}>Voir sur Wiktionnaire →</ThemedText>
+							</Pressable>
+						)}
+
+						<Pressable onPress={() => setModalVisible(false)} style={modalStyles.closeButton}>
+							<ThemedText style={modalStyles.closeText}>Fermer</ThemedText>
+						</Pressable>
+					</View>
+				</View>
+			</Modal>
+
 		</ThemedSafeAreaView>
 	);
 }
@@ -262,5 +326,61 @@ const styles = StyleSheet.create({
 	},
 	badgeInner: {
 		flexDirection: "row",
+	},
+});
+
+const modalStyles = StyleSheet.create({
+	overlay: {
+		flex: 1,
+		backgroundColor: "rgba(0, 0, 0, 0.6)",
+		justifyContent: "center",
+		alignItems: "center",
+		paddingHorizontal: 16,
+	},
+	container: {
+		width: "85%",
+		backgroundColor: "#2e2e2e",
+		borderRadius: 12,
+		padding: 20,
+		alignItems: "center",
+		borderColor: "#b2df28",
+		borderWidth: 2,
+		maxHeight: "70%", // Modal max 70% hauteur écran
+		justifyContent: "flex-start",
+	},
+	title: {
+		fontSize: 24,
+		fontWeight: "bold",
+		color: "#b2df28",
+		marginBottom: 12,
+		textAlign: "center",
+	},
+	scrollView: {
+		width: "100%",
+		// hauteur max pour scroll si texte long
+		maxHeight: 200,
+		marginBottom: 12,
+	},
+	definition: {
+		fontSize: 16,
+		color: "#fff",
+		textAlign: "left",
+	},
+	link: {
+		color: "#b2df28",
+		textDecorationLine: "underline",
+		fontSize: 14,
+		marginBottom: 12,
+	},
+	closeButton: {
+		marginTop: 8,
+		paddingVertical: 8,
+		paddingHorizontal: 20,
+		borderRadius: 8,
+		backgroundColor: "#444",
+	},
+	closeText: {
+		color: "#fff",
+		fontSize: 16,
 	},
 });
