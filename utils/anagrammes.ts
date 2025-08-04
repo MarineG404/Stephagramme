@@ -1,52 +1,59 @@
-import dictionaryJson from '@/assets/ods6.json';
+import indexedArray from '@/assets/ods6_indexed_flat.json';
 
-const dictionary = dictionaryJson as { mots: string[] };
-const validWords = new Set<string>(dictionary.mots);
+type FlatEntry = { key: string; words: string[] };
+const entries = indexedArray as FlatEntry[];
 
-// Génère toutes les permutations possibles d'une taille donnée
-function generatePermutations(letters: string[], size: number): string[][] {
-	if (size === 1) return letters.map((letter) => [letter]);
+const wordIndex = new Map<string, string[]>();
+entries.forEach(entry => {
+	wordIndex.set(entry.key, entry.words);
+});
 
-	const allPermutations: string[][] = [];
+// 🔹 Génère toutes les combinaisons possibles (triées) de lettres
+function getSortedCombinations(letters: string[]): Set<string> {
+	const result = new Set<string>();
 
-	letters.forEach((letter, index) => {
-		const remainingLetters = letters.slice(0, index).concat(letters.slice(index + 1));
-		const smallerPermutations = generatePermutations(remainingLetters, size - 1);
-		smallerPermutations.forEach((perm) => {
-			allPermutations.push([letter, ...perm]);
-		});
-	});
+	function backtrack(path: string[], start: number) {
+		if (path.length > 1) {
+			result.add([...path].sort().join(''));
+		}
+		for (let i = start; i < letters.length; i++) {
+			path.push(letters[i]);
+			backtrack(path, i + 1);
+			path.pop();
+		}
+	}
 
-	return allPermutations;
+	backtrack([], 0);
+	return result;
 }
 
-// Trouve tous les anagrammes valides à partir d’un mot
+// 🔹 Recherche simple sans joker
 export function findAnagrams(input: string): string[] {
-	const foundWords: Set<string> = new Set();
-	const inputLetters = input.toUpperCase().split('');
+	const letters = input.toUpperCase().split('');
+	const combinations = getSortedCombinations(letters);
+	const found = new Set<string>();
 
-	for (let length = inputLetters.length; length > 0; length--) {
-		const permutations = generatePermutations(inputLetters, length);
-		permutations.forEach((perm) => {
-			const candidateWord = perm.join('');
-			if (validWords.has(candidateWord)) {
-				foundWords.add(candidateWord);
-			}
-		});
+	for (const combo of combinations) {
+		const match = wordIndex.get(combo); // ✅ corriger ici
+		if (match) {
+			match.forEach((w) => found.add(w));
+		}
 	}
 
-	return Array.from(foundWords).sort((a, b) => b.length - a.length);
+	return Array.from(found).sort((a, b) => b.length - a.length || a.localeCompare(b));
 }
 
-// Trouve tous les anagrammes avec 1 joker (lettre bonus)
+// 🔹 Recherche avec un seul joker (lettre bonus)
 export function findAnagramsWithJoker(input: string): string[] {
-	const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-	const anagramSet: Set<string> = new Set();
+	const base = input.toUpperCase();
+	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	const results = new Set<string>();
 
-	for (const extraLetter of alphabet) {
-		const anagrams = findAnagrams(input + extraLetter);
-		anagrams.forEach((word) => anagramSet.add(word));
+	for (const extra of alphabet) {
+		const extended = base + extra;
+		const anagrams = findAnagrams(extended);
+		anagrams.forEach((w) => results.add(w));
 	}
 
-	return Array.from(anagramSet).sort((a, b) => b.length - a.length);
+	return Array.from(results).sort((a, b) => b.length - a.length || a.localeCompare(b));
 }

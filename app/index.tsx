@@ -56,8 +56,7 @@ export default function HomeScreen() {
 
 		let anagrams: string[];
 		if (trimmed.includes("?")) {
-			const inputWithoutJoker = trimmed.replace(/\?/g, "");
-			anagrams = findAnagramsWithJoker(inputWithoutJoker);
+			anagrams = findAnagramsWithJoker(trimmed);
 		} else {
 			anagrams = findAnagrams(trimmed);
 		}
