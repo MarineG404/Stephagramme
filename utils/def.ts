@@ -11,7 +11,6 @@ export async function getDefinitionWithApi(word: string): Promise<string | null>
 		});
 		const url = `https://fr.wiktionary.org/w/api.php?${params.toString()}`;
 
-		console.log(url);
 		const res = await fetch(url, {
 			method: 'GET',
 			headers: {
@@ -24,10 +23,9 @@ export async function getDefinitionWithApi(word: string): Promise<string | null>
 			return null;
 		}
 		const data = await res.json();
-		console.log(data);
 		const pages = data.query.pages;
 		if (!pages || Object.keys(pages).length === 0) return 'Définition introuvable.';
-		const page = pages[Object.keys(pages)[0]]; // pages is an object, not array
+		const page = pages[Object.keys(pages)[0]];
 		if (page.missing) return 'Entrée introuvable.';
 		const extract: string = page.extract;
 		return extract || 'Définition introuvable.';
