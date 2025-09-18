@@ -1,50 +1,74 @@
-# Welcome to your Expo app 👋
+# 🅰️ Stephagramme
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 📖 Description
 
-## Get started
+Stephagramme est une application mobile Expo/React Native dédiée à la recherche d’anagrammes et à l’aide au Scrabble. Elle permet de trouver tous les mots possibles à partir d’un tirage de lettres, de gérer les jokers (`?`), de filtrer par longueur, et d’obtenir la définition des mots via le Wiktionnaire.
 
-1. Install dependencies
+## 🚀 Fonctionnalités
 
-   ```bash
-   npm install
-   ```
+- [x] Recherche d’anagrammes à partir d’un tirage de lettres
+- [x] Gestion des jokers (`?`) pour remplacer n’importe quelle lettre
+- [x] Affichage des définitions des mots via l’API Wiktionnaire
+- [x] Affichage des résultats triés par longueur
+- [x] Lien direct vers la page Wiktionnaire du mot
 
-2. Start the app
+## 🛠️ Technologies utilisées
 
-   ```bash
-   npx expo start
-   ```
+- **Front-end** : React Native, Expo, TypeScript
+- **Librairies** : expo-av (audio), expo-router, expo-audio (optionnel)
+- **Base de données** : Dictionnaire ODS6 au format JSON
+- **API externe** : Wiktionnaire (définitions)
+- **Autres** : Git, EAS Build
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 📂 Structure du projet
 
 ```bash
-npm run reset-project
+Stephagramme/
+│── app/                # Pages et composants Expo Router
+│── assets/             # Images, dictionnaires JSON
+│── utils/              # Fonctions utilitaires (anagrammes, définitions, etc.)
+│── node_modules/       # Dépendances npm
+│── package.json        # Dépendances et scripts
+│── app.json            # Configuration Expo
+│── eas.json            # Configuration EAS Build
+│── README.md           # Documentation principale
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## ⚙️ Installation & utilisation
 
-To learn more about developing your project with Expo, look at the following resources:
+### 1. Pré-requis
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Node.js >= 18
+- npm >= 9
+- Un émulateur Android/iOS ou Expo Go sur votre smartphone
 
-## Join the community
+### 2. Cloner le projet
 
-Join our community of developers creating universal apps.
+```bash
+https://github.com/MarineG404/Stephagramme/
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 3. Installer les dépendances
+
+```bash
+npm install
+```
+
+### 4. Lancer l’application
+
+```bash
+npx expo start
+```
+
+Suivez les instructions pour ouvrir l’app sur un émulateur ou Expo Go.
+
+## 📸 Captures d’écran
+
+<img src="./assets/images/pres1.jpeg" alt="Texte alternatif" width="30%">
+<img src="./assets/images/pres2.jpeg" alt="Texte alternatif" width="30%">
+
+## 👥 Auteurs / contributeurs
+
+- Marine - Développement, conception, intégration
