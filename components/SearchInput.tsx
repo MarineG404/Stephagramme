@@ -1,85 +1,82 @@
+import { ThemedText } from "@/components/themed/ThemedText";
+import { ThemedView } from "@/components/themed/ThemedView";
+import { AntDesign, Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
-import { View, TextInput, TouchableOpacity, Dimensions } from "react-native";
-import { Feather, AntDesign } from "@expo/vector-icons";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
 const MAX_WIDTH = Dimensions.get("window").width * 0.95;
 
 type Props = {
-  word: string;
-  setWord: (v: string) => void;
-  onSearch: (v?: string) => void; // déclenchée manuellement ou par debounce
-  maxLength?: number;
-  debounceMs?: number;
+	word: string;
+	setWord: (v: string) => void;
+	onSearch: (v?: string) => void;
+	maxLength?: number;
+	debounceMs?: number;
+	isRunning?: boolean;
 };
 
 export default function SearchInput({
-  word,
-  setWord,
-  onSearch,
-  maxLength = 10,
-  debounceMs = 300,
+	word,
+	setWord,
+	onSearch,
+	maxLength = 10,
+	debounceMs = 1000,
+	isRunning = false,
 }: Props) {
-  const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isEmpty = word.trim().length === 0;
+	const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const isEmpty = word.trim().length === 0;
 
-  const handleChange = (text: string) => {
-    setWord(text);
+	const handleChange = (text: string) => {
+		setWord(text);
 
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
+		if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+		debounceTimeout.current = setTimeout(() => {
+			onSearch(text);
+		}, debounceMs);
+	};
 
-    debounceTimeout.current = setTimeout(() => {
-      onSearch(text);
-    }, debounceMs);
-  };
+	useEffect(() => {
+		return () => {
+			if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+		};
+	}, []);
 
-  // cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    };
-  }, []);
+	return (
+		<ThemedView style={styles.inputContainer}>
+			<View style={styles.inputRow}>
+				<TextInput
+					style={styles.input}
+					placeholder="Entrez vos lettres…"
+					placeholderTextColor="#b2df28"
+					value={word}
+					onChangeText={handleChange}
+					autoCapitalize="none"
+					autoCorrect={false}
+					maxLength={maxLength}
+				/>
 
-  return (
-    <ThemedView style={styles.inputContainer}>
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Entrez vos lettres…"
-          placeholderTextColor="#b2df28"
-          value={word}
-          onChangeText={handleChange}
-          autoCapitalize="none"
-          autoCorrect={false}
-          maxLength={maxLength}
-        />
+				<TouchableOpacity onPress={() => onSearch(word)} style={styles.iconButton} disabled={isRunning}>
+					<Feather name="refresh-ccw" size={28} color="#b2df28" />
+				</TouchableOpacity>
 
-        <TouchableOpacity onPress={() => onSearch(word)} style={styles.iconButton}>
-          <Feather name="refresh-ccw" size={28} color="#b2df28" />
-        </TouchableOpacity>
+				<TouchableOpacity
+					onPress={() => setWord("")}
+					style={[styles.iconButton, isEmpty && styles.iconButtonDisabled]}
+					disabled={isEmpty}
+				>
+					<AntDesign name="closecircle" size={28} color={isEmpty ? "#555" : "#b2df28"} />
+				</TouchableOpacity>
+			</View>
 
-        <TouchableOpacity
-          onPress={() => setWord("")}
-          style={[styles.iconButton, isEmpty && styles.iconButtonDisabled]}
-          disabled={isEmpty}
-        >
-          <AntDesign name="closecircle" size={28} color={isEmpty ? "#555" : "#b2df28"} />
-        </TouchableOpacity>
-      </View>
-
-      <ThemedText style={{ color: "#b2df28", marginTop: 4, textAlign: "right" }}>
-        {word.length}/{maxLength}
-      </ThemedText>
-    </ThemedView>
-  );
+			<ThemedText style={{ color: "#b2df28", marginTop: 4, textAlign: "right" }}>
+				{word.length}/{maxLength}
+			</ThemedText>
+		</ThemedView>
+	);
 }
 
-const styles =  StyleSheet.create({
-		inputContainer: {
+const styles = StyleSheet.create({
+	inputContainer: {
 		width: MAX_WIDTH,
 		backgroundColor: "#333",
 		borderRadius: 12,
@@ -107,4 +104,4 @@ const styles =  StyleSheet.create({
 		borderRadius: 8,
 	},
 	iconButtonDisabled: { opacity: 0.4 },
-})
+});

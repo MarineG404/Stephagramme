@@ -1,4 +1,4 @@
-import { ThemedText } from "@/components/ThemedText";
+import { ThemedText } from "@/components/themed/ThemedText";
 import React from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 

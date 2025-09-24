@@ -1,28 +1,31 @@
 import { ThemedSafeAreaView } from "@/components/themed/ThemedSafeAreaView";
-import { ThemedText } from "@/components/ThemedText";
+import { ThemedText } from "@/components/themed/ThemedText";
 import { Audio } from "expo-av";
 import React, { useCallback, useEffect, useState } from "react";
-import { Dimensions, ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 
 import DefinitionModal from "@/components/DefinitionModal";
+import ErrorModal from "@/components/ErrorModal";
 import ResultsList from "@/components/ResultsList";
 import SearchInput from "@/components/SearchInput";
 
-import { findAnagrams, findAnagramsWithJoker } from "@/utils/anagrammes";
+import { findAnagramsAsync, findAnagramsWithJokerAsync } from "@/utils/anagrammes";
 import { getDefinitionWithApi } from "@/utils/def";
 import { highlightJokerLetters } from "@/utils/highlightJoker";
-
 
 export default function HomeScreen() {
 	const [word, setWord] = useState("");
 	const [results, setResults] = useState<string[]>([]);
 	const [isRunning, setIsRunning] = useState(false);
 
-	// Modal state
+	// Definition modal
 	const [selectedWord, setSelectedWord] = useState<string | null>(null);
 	const [definition, setDefinition] = useState<string | null>(null);
 	const [modalVisible, setModalVisible] = useState(false);
 	const [loadingDef, setLoadingDef] = useState(false);
+
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [errorModalVisible, setErrorModalVisible] = useState(false);
 
 	const isEmpty = word.trim().length === 0;
 
@@ -38,9 +41,23 @@ export default function HomeScreen() {
 		});
 	}, []);
 
+
 	const runSearch = useCallback(
 		async (maybeText?: string) => {
-			const input = (maybeText ?? word).trim();
+			const input = (maybeText ?? word).trim().toUpperCase();
+
+			// Count jokers
+			const jokerCount = (input.match(/\?/g) || []).length;
+			if (jokerCount > 2) {
+				setErrorMessage("Vous ne pouvez pas utiliser plus de 2 jokers (?).");
+				setErrorModalVisible(true);
+				setResults([]);
+				return;
+			} else {
+				setErrorMessage(null);
+				setErrorModalVisible(false);
+			}
+
 			setIsRunning(true);
 
 			if (input.length === 0) {
@@ -49,23 +66,41 @@ export default function HomeScreen() {
 				return;
 			}
 
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			await new Promise(resolve => setTimeout(resolve, 50));
 
 			let anagrams: string[];
 			if (input.includes("?")) {
-				anagrams = findAnagramsWithJoker(input);
+				anagrams = await findAnagramsWithJokerAsync(input);
 			} else {
-				anagrams = findAnagrams(input);
+				anagrams = await findAnagramsAsync(input);
 			}
 
-			anagrams.sort((a, b) => b.length - a.length || a.localeCompare(b));
 			setResults(anagrams);
 			setIsRunning(false);
 		},
 		[word]
 	);
 
-	// Ouvre modal avec définition
+	const handleCloseErrorModal = () => {
+		if (word.includes("?")) {
+			let seen = 0;
+			const fixed = word
+				.split("")
+				.map(c => {
+					if (c === "?") {
+						seen += 1;
+						return seen <= 2 ? "?" : "";
+					}
+					return c;
+				})
+				.join("");
+			setWord(fixed);
+		}
+		setErrorMessage(null);
+		setErrorModalVisible(false);
+	};
+
+
 	const openDefinitionModal = async (selected: string) => {
 		setSelectedWord(selected);
 		setDefinition(null);
@@ -80,10 +115,12 @@ export default function HomeScreen() {
 	return (
 		<ThemedSafeAreaView style={styles.container}>
 			<ScrollView
-				contentContainerStyle={[styles.scrollContent, isEmpty && results.length === 0 ? styles.centerEmpty : {}]}
+				contentContainerStyle={[
+					styles.scrollContent,
+					isEmpty && results.length === 0 ? styles.centerEmpty : {},
+				]}
 				keyboardShouldPersistTaps="handled"
 			>
-				{/* Header */}
 				<ThemedText style={styles.title}>Triche Scrabble</ThemedText>
 
 				<SearchInput
@@ -91,7 +128,7 @@ export default function HomeScreen() {
 					setWord={setWord}
 					onSearch={runSearch}
 					maxLength={10}
-					debounceMs={300}
+					debounceMs={1000}
 				/>
 
 				<ResultsList
@@ -104,6 +141,7 @@ export default function HomeScreen() {
 				/>
 			</ScrollView>
 
+			{/* Modals */}
 			<DefinitionModal
 				visible={modalVisible}
 				selectedWord={selectedWord}
@@ -111,6 +149,13 @@ export default function HomeScreen() {
 				loadingDef={loadingDef}
 				onClose={() => setModalVisible(false)}
 			/>
+
+			<ErrorModal
+				visible={errorModalVisible}
+				message={errorMessage}
+				onClose={handleCloseErrorModal}
+			/>
+
 		</ThemedSafeAreaView>
 	);
 }
@@ -131,4 +176,3 @@ const styles = StyleSheet.create({
 	},
 	resultContainer: { marginTop: 24, paddingHorizontal: 8 },
 });
-

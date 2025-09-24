@@ -1,44 +1,23 @@
 import { ThemedText } from "@/components/themed/ThemedText";
 import React from "react";
-import { ActivityIndicator, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 
 type Props = {
 	visible: boolean;
-	selectedWord: string | null;
-	definition: string | null;
-	loadingDef: boolean;
+	message: string | null;
 	onClose: () => void;
 };
 
-export default function DefinitionModal({ visible, selectedWord, definition, loadingDef, onClose }: Props) {
+export default function ErrorModal({ visible, message, onClose }: Props) {
 	return (
 		<Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
 			<View style={styles.overlay}>
 				<View style={styles.container}>
-					<ThemedText style={styles.title}>{selectedWord}</ThemedText>
-
-					<ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 12 }}>
-						{loadingDef ? (
-							<ActivityIndicator color="#b2df28" />
-						) : (
-							<ThemedText style={styles.definition}>{definition}</ThemedText>
-						)}
-					</ScrollView>
-
-					{!loadingDef && (
-						<Pressable
-							onPress={() =>
-								Linking.openURL(
-									`https://fr.wiktionary.org/wiki/${encodeURIComponent((selectedWord || "").toLowerCase())}`
-								)
-							}
-						>
-							<ThemedText style={styles.link}>Voir sur Wiktionnaire →</ThemedText>
-						</Pressable>
-					)}
+					<ThemedText style={styles.title}>Erreur</ThemedText>
+					<ThemedText style={styles.message}>{message}</ThemedText>
 
 					<Pressable onPress={onClose} style={styles.closeButton}>
-						<ThemedText style={styles.closeText}>Fermer</ThemedText>
+						<ThemedText style={styles.closeText}>OK</ThemedText>
 					</Pressable>
 				</View>
 			</View>
@@ -67,9 +46,8 @@ const styles = StyleSheet.create({
 	},
 	title: { fontSize: 24, fontWeight: "bold", color: "#b2df28", marginBottom: 12, textAlign: "center" },
 	scrollView: { width: "100%", maxHeight: 200, marginBottom: 12 },
-	definition: { fontSize: 16, color: "#fff", textAlign: "left" },
+	message: { fontSize: 16, color: "#fff", textAlign: "left" },
 	link: { color: "#b2df28", textDecorationLine: "underline", fontSize: 14, marginBottom: 12 },
 	closeButton: { marginTop: 8, paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, backgroundColor: "#444" },
 	closeText: { color: "#fff", fontSize: 16 },
 });
-
