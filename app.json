@@ -1,7 +1,7 @@
 {
 	"expo": {
 		"name": "Stephagramme",
-		"slug": "Stephagramme",
+		"slug": "stephagramme",
 		"version": "1.0.0",
 		"orientation": "portrait",
 		"icon": "./assets/images/icon.png",
@@ -9,50 +9,44 @@
 		"userInterfaceStyle": "automatic",
 		"newArchEnabled": true,
 		"ios": {
-			"supportsTablet": true,
-			"bundleIdentifier": "com.marineg404.Stephagramme"
+			"supportsTablet": true
 		},
 		"android": {
 			"adaptiveIcon": {
-				"foregroundImage": "./assets/images/icon.png",
 				"backgroundColor": "#222a22"
 			},
 			"edgeToEdgeEnabled": true,
-			"package": "com.marineg404.Stephagramme"
+			"predictiveBackGestureEnabled": false,
+			"package": "com.marine.stephagramme",
+			"versionCode": 1
 		},
 		"web": {
-			"bundler": "metro",
-			"output": "static",
-			"favicon": "./assets/images/icon.png"
+			"output": "static"
 		},
 		"plugins": [
 			"expo-router",
 			[
 				"expo-splash-screen",
 				{
-					"image": "./assets/images/icon.png",
+					"image": "./assets/images/splash-icon.png",
 					"imageWidth": 200,
 					"resizeMode": "contain",
-					"backgroundColor": "#ffffff"
+					"backgroundColor": "#222a22",
+					"dark": {
+						"backgroundColor": "#0b0b0d"
+					}
 				}
 			]
 		],
 		"experiments": {
-			"typedRoutes": true
-		},
-		"splash": {
-			"image": "./assets/images/icon.png",
-			"resizeMode": "contain",
-			"backgroundColor": "#222a22"
+			"typedRoutes": true,
+			"reactCompiler": true
 		},
 		"extra": {
 			"router": {},
 			"eas": {
-				"projectId": "c9b8f893-ea3f-4692-87aa-4ef245741580"
+				"projectId": "b1c6f0e3-2f4e-4f3a-8e2e-1d3b8f4e5c6d"
 			}
-		},
-		"cli": {
-			"login": false
 		}
 	}
 }
